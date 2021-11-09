@@ -1,8 +1,10 @@
 class Line{
-    constructor(x, y){
+    constructor(x, y, color, width){ 
         this.startPos = [x, y];
         this.dragPath = [this.startPos]; 
-        this.endPos; 
+        this.endPos;
+        this.lineColor = color;
+        this.lineWidth = width; 
     }
     setEndPos(x, y){
         this.endPos = [x, y]; 
@@ -12,9 +14,19 @@ class Line{
     }
     drawLine(ctx, x1, y1, x2, y2){
         ctx.beginPath();
+        // save initial attributes 
+        const initialColor = ctx.strokeStyle;
+        const initialWidth = ctx.lineWidth; 
+        // change ctx attributes to this 
+        ctx.strokeStyle = this.lineColor;
+        ctx.lineWidth = this.lineWidth;
+        // draw line 
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);   
         ctx.stroke();
+        // reset attributes 
+        ctx.strokeStyle = initialColor;
+        ctx.lineWidth = initialWidth; 
     }
     drawLineSection(ctx){
         if (this.dragPath.length >= 2){
@@ -55,6 +67,15 @@ const addPosAndDraw = (ctx,curLine, x, y) =>{
     curLine.addToPath(x, y);
     curLine.drawLineSection(ctx); 
 }
+const changeColor = (ctx, newColor) =>{
+    ctx.strokeStyle = newColor; 
+}
+const changeWidth = (ctx, newWidth) =>{
+    ctx.lineWidth = parseInt(newWidth); 
+}
+const clearCanvas = (ctx, canvas) =>{
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+}
 // 'main' function 
 window.onload = () =>{
     // element references 
@@ -75,7 +96,7 @@ window.onload = () =>{
             return; 
         }
         const [x, y] = getCursorPosition(canvas, event); 
-        curLine = new Line(x, y); 
+        curLine = new Line(x, y, colorPicker.value, parseInt(thicknessPicker.value) );   
     });
     canvas.addEventListener("mousemove", (event) =>{
         if (!curLine){
@@ -103,7 +124,7 @@ window.onload = () =>{
     });
 
     undoButton.addEventListener("click", ()=>{
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        clearCanvas(ctx, canvas); 
         // redraw lines without last line 
         lines = lines.filter(line => line !== lastDrawn); 
         lines.forEach(line => line.redrawLine(ctx));
@@ -111,11 +132,20 @@ window.onload = () =>{
             lastDrawn = lines[lines.length -1 ]; 
         }
 
+    });
+
+    colorPicker.addEventListener("change", ()=>{
+        changeColor(ctx, colorPicker.value); 
+    });
+
+    thicknessPicker.addEventListener("change", ()=>{
+        changeWidth(ctx, thicknessPicker.value); 
+    });
+    clearButton.addEventListener("click", ()=>{
+        clearCanvas(ctx, canvas); 
+        // reset all references 
+        lines = [];
+        lastDrawn = null; 
+        curLine = null; 
     }); 
-
-
-
-
-
-
 }
